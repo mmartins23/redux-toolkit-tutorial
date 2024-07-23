@@ -1,94 +1,104 @@
-### Summary: Redux Toolkit Tutorial - 21 - Ice Cream Feature
+### Redux Toolkit Tutorial - 22 - Logger Middleware
 
-This tutorial explains how to add an ice cream feature to the Redux store using Redux Toolkit.
+In this tutorial, we learn how to apply middleware to a Redux Toolkit store, specifically the `redux-logger` middleware. This middleware will help us log the actions dispatched and the resulting state changes, providing insight into Redux Toolkit's behavior.
 
-#### `store.js`
+#### Steps Taken:
 
-This file configures the Redux store to include both cake and ice cream reducers.
+1. **Install Logger Middleware**:
+   - Open the terminal in the `redux-toolkit-demo` folder.
+   - Run the command to install the `redux-logger` package:
+     ```bash
+     npm install redux-logger
+     ```
 
-```javascript
-const { configureStore } = require('@reduxjs/toolkit');
-const cakeReducer = require("../features/cake/cakeSlice");
-const icecreamReducer = require("../features/icecream/icecreamSlice");
+2. **Create Logger Middleware**:
+   - In `store.js`, import and create the logger middleware:
+     ```javascript
+     const { configureStore } = require('@reduxjs/toolkit');
+     const reduxLogger = require('redux-logger');
+     const cakeReducer = require("../features/cake/cakeSlice");
+     const icecreamReducer = require("../features/icecream/icecreamSlice");
+     const logger = reduxLogger.createLogger();
 
-const store = configureStore({
-    reducer: {
-        cake: cakeReducer,
-        icecream: icecreamReducer,
-    },
-});
+     const store = configureStore({
+         reducer: {
+             cake: cakeReducer,
+             icecream: icecreamReducer,
+         },
+         middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),
+     });
 
-module.exports = store;
-```
+     module.exports = store;
+     ```
 
-#### `icecreamSlice.js`
+3. **Configure the Store with Middleware**:
+   - The `configureStore` function automatically applies some default middleware. We extend this by concatenating our logger middleware using `getDefaultMiddleware`.
 
-This file creates a slice for the ice cream feature using `createSlice` from Redux Toolkit, defining the initial state and reducers for ordering and restocking ice creams.
+4. **Modify `index.js`**:
+   - Update `index.js` to initialize the store, import actions, and dispatch them. Remove the state logging in the store subscription as the logger middleware will handle it:
+     ```javascript
+     const store = require('./app/store');
+     const cakeActions = require('./features/cake/cakeSlice').cakeActions;
+     const icecreamActions = require('./features/icecream/icecreamSlice').icecreamActions;
 
-```javascript
-const { createSlice } = require("@reduxjs/toolkit");
+     console.log("Initial state", store.getState());
+     const unsubscribe = store.subscribe(() => {});
 
-const initialState = {
-    numOfIceCreams: 20,
-};
+     store.dispatch(cakeActions.ordered());
+     store.dispatch(cakeActions.ordered());
+     store.dispatch(cakeActions.ordered());
+     store.dispatch(cakeActions.restocked(3));
 
-const icecreamSlice = createSlice({
-    name: 'icecream',
-    initialState,
-    reducers: {
-        ordered: (state) => {
-            state.numOfIceCreams--;
-        },
-        restocked: (state, action) => {
-            state.numOfIceCreams += action.payload;
-        },
-    },
-});
+     store.dispatch(icecreamActions.ordered());
+     store.dispatch(icecreamActions.ordered());
+     store.dispatch(icecreamActions.restocked(2));
 
-module.exports = icecreamSlice.reducer;
-module.exports.icecreamActions = icecreamSlice.actions;
-```
+     unsubscribe();
+     ```
 
-#### `index.js`
+5. **Observe Logs in Terminal**:
+   - Run `node index` to see the logger middleware output in the terminal. The logs will show the action types dispatched and the updated state:
+     ```
+     Initial state { cake: { numOfCakes: 10 }, icecream: { numOfIceCreams: 20 } }
 
-This file initializes the store, imports actions from the cake and ice cream slices, logs the initial state, subscribes to state updates, dispatches actions for both cake and ice cream, and then unsubscribes from the store updates.
+     action cake/ordered @ hh:mm:ss.mmm
+       prev state { cake: { numOfCakes: 10 }, icecream: { numOfIceCreams: 20 } }
+       action     { type: 'cake/ordered' }
+       next state { cake: { numOfCakes: 9 }, icecream: { numOfIceCreams: 20 } }
 
-```javascript
-const store = require('./app/store');
-const cakeActions = require('./features/cake/cakeSlice').cakeActions;
-const icecreamActions = require('./features/icecream/icecreamSlice').icecreamActions;
+     action cake/ordered @ hh:mm:ss.mmm
+       prev state { cake: { numOfCakes: 9 }, icecream: { numOfIceCreams: 20 } }
+       action     { type: 'cake/ordered' }
+       next state { cake: { numOfCakes: 8 }, icecream: { numOfIceCreams: 20 } }
 
-console.log("Initial state", store.getState());
+     action cake/ordered @ hh:mm:ss.mmm
+       prev state { cake: { numOfCakes: 8 }, icecream: { numOfIceCreams: 20 } }
+       action     { type: 'cake/ordered' }
+       next state { cake: { numOfCakes: 7 }, icecream: { numOfIceCreams: 20 } }
 
-const unsubscribe = store.subscribe(() => {
-    console.log("Updated state", store.getState());
-});
+     action cake/restocked @ hh:mm:ss.mmm
+       prev state { cake: { numOfCakes: 7 }, icecream: { numOfIceCreams: 20 } }
+       action     { type: 'cake/restocked', payload: 3 }
+       next state { cake: { numOfCakes: 10 }, icecream: { numOfIceCreams: 20 } }
 
-store.dispatch(cakeActions.ordered());
-store.dispatch(cakeActions.ordered());
-store.dispatch(cakeActions.ordered());
-store.dispatch(cakeActions.restocked(3));
+     action icecream/ordered @ hh:mm:ss.mmm
+       prev state { cake: { numOfCakes: 10 }, icecream: { numOfIceCreams: 20 } }
+       action     { type: 'icecream/ordered' }
+       next state { cake: { numOfCakes: 10 }, icecream: { numOfIceCreams: 19 } }
 
-store.dispatch(icecreamActions.ordered());
-store.dispatch(icecreamActions.ordered());
-store.dispatch(icecreamActions.restocked(2));
+     action icecream/ordered @ hh:mm:ss.mmm
+       prev state { cake: { numOfCakes: 10 }, icecream: { numOfIceCreams: 19 } }
+       action     { type: 'icecream/ordered' }
+       next state { cake: { numOfCakes: 10 }, icecream: { numOfIceCreams: 18 } }
 
-unsubscribe();
-```
+     action icecream/restocked @ hh:mm:ss.mmm
+       prev state { cake: { numOfCakes: 10 }, icecream: { numOfIceCreams: 18 } }
+       action     { type: 'icecream/restocked', payload: 2 }
+       next state { cake: { numOfCakes: 10 }, icecream: { numOfIceCreams: 20 } }
+     ```
 
-### Steps Summary
+### Key Takeaways
 
-1. **Create Slice for Ice Cream**:
-   - Use `createSlice` to define the initial state and reducers for the ice cream feature.
-
-2. **Configure Store**:
-   - Use `configureStore` to set up the Redux store and include both `cakeReducer` and `icecreamReducer`.
-
-3. **Initialize Store and Dispatch Actions**:
-   - Import the store and actions in `index.js`.
-   - Log the initial state.
-   - Subscribe to state updates.
-   - Dispatch actions to order and restock cakes and ice creams.
-   - Unsubscribe from the store updates.
-
-This setup demonstrates how to manage multiple slices of state (cakes and ice creams) using Redux Toolkit, simplifying the state management process and reducing boilerplate code.
+- **Middleware Application**: We learn how to apply middleware in Redux Toolkit, extending its functionality.
+- **Logger Insight**: The logger middleware provides clear insights into the dispatched actions and the resulting state changes, enhancing debugging and understanding of Redux Toolkit's behavior.
+- **Action Types**: Redux Toolkit automatically handles action types using slice names and reducer keys, simplifying action management.

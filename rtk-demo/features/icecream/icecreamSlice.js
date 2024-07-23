@@ -15,7 +15,7 @@ const icecreamSlice = createSlice({
             state.numOfIceCreams += action.payload
         }
     }
-})
+});
 
 module.exports = icecreamSlice.reducer;
 module.exports.icecreamActions = icecreamSlice.actions;
