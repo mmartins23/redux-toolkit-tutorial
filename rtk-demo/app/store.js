@@ -1,4 +1,4 @@
-const {configureStore} = require('@reduxjs/toolkit').configureStore;
+const {configureStore} = require('@reduxjs/toolkit');
 const reduxLogger = require('redux-logger');
 const cakeReducer = require("../features/cake/cakeSlice");
 const icecreamReducer = require("../features/icecream/icecreamSlice");
